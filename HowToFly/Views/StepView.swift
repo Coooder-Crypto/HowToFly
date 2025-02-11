@@ -7,6 +7,10 @@ struct StepView: View {
     @Binding var completedTips: Set<UUID>
     @State private var showingIncompleteWarning = false
     
+    // Haptic feedback generators
+    private let warningHaptic = UINotificationFeedbackGenerator()
+    private let selectionHaptic = UISelectionFeedbackGenerator()
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -36,41 +40,28 @@ struct StepView: View {
                     .foregroundColor(.secondary)
                     .padding(.horizontal)
                 
-                // Images
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(step.images, id: \.self) { colorName in
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(colorName))
-                                .frame(width: 200, height: 150)
-                                .overlay(
-                                    Text("示例图片")
-                                        .foregroundColor(.white)
-                                )
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-                
                 // Tips
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 20) {
                     Text("注意事项")
                         .font(.headline)
                         .padding(.horizontal)
                     
-                    ForEach(step.tips) { tip in
-                        TipRow(
-                            tip: tip,
-                            isCompleted: completedTips.contains(tip.id),
-                            showWarning: $showingIncompleteWarning,
-                            onToggle: { completed in
-                                if completed {
-                                    completedTips.insert(tip.id)
-                                } else {
-                                    completedTips.remove(tip.id)
+                    LazyVStack(alignment: .leading, spacing: 24) {
+                        ForEach(step.tips) { tip in
+                            TipRow(
+                                tip: tip,
+                                isCompleted: completedTips.contains(tip.id),
+                                showWarning: $showingIncompleteWarning,
+                                onToggle: { completed in
+                                    selectionHaptic.selectionChanged()
+                                    if completed {
+                                        completedTips.insert(tip.id)
+                                    } else {
+                                        completedTips.remove(tip.id)
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
                 .padding(.vertical)
@@ -81,25 +72,13 @@ struct StepView: View {
                 )
                 .padding(.horizontal)
                 
-                if isLastStep {
-                    Button(action: onComplete) {
-                        Text("完成")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.accentColor)
-                            .cornerRadius(12)
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 20)
-                }
-                
                 Spacer(minLength: 40)
             }
         }
-        .alert("请完成所有必要步骤", isPresented: $showingIncompleteWarning) {
-            Button("好的", role: .cancel) { }
+        .onChange(of: showingIncompleteWarning) { newValue in
+            if newValue {
+                warningHaptic.notificationOccurred(.warning)
+            }
         }
     }
 }
@@ -113,27 +92,51 @@ struct TipRow: View {
     @State private var isShaking = false
     
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            if tip.type == .todo {
-                Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isCompleted ? .green : .gray)
-                    .onTapGesture {
-                        onToggle(!isCompleted)
-                    }
-            } else {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.orange)
+        VStack(alignment: .leading, spacing: 12) {
+            // Tip header with icon and text
+            HStack(alignment: .top, spacing: 12) {
+                if tip.type == .todo {
+                    Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(isCompleted ? .green : .gray)
+                        .onTapGesture {
+                            onToggle(!isCompleted)
+                        }
+                } else {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                }
+                
+                Text(tip.content)
+                    .font(.subheadline)
+                    .foregroundColor(tip.type == .todo && !isCompleted ? .primary : .secondary)
+                
+                Spacer()
             }
             
-            Text(tip.content)
-                .font(.subheadline)
-                .foregroundColor(tip.type == .todo && !isCompleted ? .primary : .secondary)
-            
-            Spacer()
+            // Tip images in a grid
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 8),
+                GridItem(.flexible(), spacing: 8)
+            ], spacing: 8) {
+                ForEach(0..<2) { _ in
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.red.opacity(0.1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.red.opacity(0.2), lineWidth: 1)
+                        )
+                        .aspectRatio(4/3, contentMode: .fit)
+                        .overlay(
+                            Image(systemName: "photo")
+                                .font(.system(size: 24))
+                                .foregroundColor(.red.opacity(0.3))
+                        )
+                }
+            }
         }
         .padding(.horizontal)
         .modifier(ShakeEffect(shaking: isShaking))
-        .onChange(of: showWarning) { oldValue, newValue in
+        .onChange(of: showWarning) { newValue in
             if newValue && tip.type == .todo && !isCompleted {
                 withAnimation(.default.repeatCount(3)) {
                     isShaking = true

@@ -24,12 +24,6 @@ struct FlightStep: Identifiable {
     let tips: [Tip]
     let images: [String] // 暂时使用颜色名称作为图片占位符
     
-    var hasUncompletedTodos: Bool {
-        tips.contains { tip in
-            tip.type == .todo && !tip.isCompleted
-        }
-    }
-    
     static let steps: [FlightStep] = [
         FlightStep(
             id: 0,
