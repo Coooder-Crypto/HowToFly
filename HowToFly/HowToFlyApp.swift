@@ -12,6 +12,8 @@ struct HowToFlyApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(.none)
+                .accentColor(.blue)
         }
     }
 }
