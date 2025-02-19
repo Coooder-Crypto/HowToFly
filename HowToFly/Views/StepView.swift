@@ -1,167 +1,142 @@
 import SwiftUI
+import Foundation
 
 struct StepView: View {
     let step: FlightStep
     let isLastStep: Bool
     let onComplete: () -> Void
     @Binding var completedTips: Set<UUID>
-    @State private var showingIncompleteWarning = false
     
-    // Haptic feedback generators
-    private let warningHaptic = UINotificationFeedbackGenerator()
-    private let selectionHaptic = UISelectionFeedbackGenerator()
+    // 固定位置布局
+    private func tipPosition(in size: CGSize, for index: Int) -> CGPoint {
+        let centerX = size.width / 2
+        let centerY = size.height / 2
+        let radius: CGFloat = min(size.width, size.height) * 0.38 // 稍微增加半径
+        
+        // 根据步骤ID和tip索引确定固定角度，使用45度的偏移确保在四个角
+        let baseAngle = Double(step.id) * 12.0 // 每个步骤旋转12度
+        let angles: [Double] = [45, 135, 225, 315] // 四个角的基础角度
+        let angle = angles[index] + baseAngle
+        let radian = angle * .pi / 180.0
+        
+        return CGPoint(
+            x: centerX + CGFloat(Darwin.cos(radian)) * radius,
+            y: centerY + CGFloat(Darwin.sin(radian)) * radius
+        )
+    }
+    
+    // 固定大小
+    private func circleSize(for tip: Tip) -> CGFloat {
+        if tip.images != nil {
+            return tip.type == .todo ? 180 : 160 // 带图片的圆形更大
+        } else {
+            return 120 // 不带图片的圆形较小
+        }
+    }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // Header
-                HStack {
-                    Image(systemName: step.icon)
-                        .font(.system(size: 30))
-                        .foregroundColor(.accentColor)
-                        .frame(width: 60, height: 60)
-                        .background(
-                            Circle()
-                                .fill(Color(.systemBackground))
-                                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
-                        )
-                    
-                    Text(step.title)
-                        .font(.title)
-                        .fontWeight(.bold)
-                    
-                    Spacer()
-                }
-                .padding(.horizontal)
+        GeometryReader { geometry in
+            ZStack {
+                // 背景色
+                Color(hex: "DAF5FF")
+                    .ignoresSafeArea()
                 
-                // Description
-                Text(step.description)
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal)
-                
-                // Tips
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("注意事项")
-                        .font(.headline)
-                        .padding(.horizontal)
-                    
-                    LazyVStack(alignment: .leading, spacing: 24) {
-                        ForEach(step.tips) { tip in
-                            TipRow(
-                                tip: tip,
-                                isCompleted: completedTips.contains(tip.id),
-                                showWarning: $showingIncompleteWarning,
-                                onToggle: { completed in
-                                    selectionHaptic.selectionChanged()
-                                    if completed {
-                                        completedTips.insert(tip.id)
-                                    } else {
-                                        completedTips.remove(tip.id)
-                                    }
-                                }
-                            )
+                // 主圆圈（标题和描述）
+                Circle()
+                    .fill(Color(hex: "B0DAFF"))
+                    .frame(width: 220, height: 220)
+                    .overlay(
+                        VStack(spacing: 12) {
+                            Text(step.title)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .multilineTextAlignment(.center)
+                            
+                            Text(step.description)
+                                .font(.subheadline)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
                         }
-                    }
-                }
-                .padding(.vertical)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
-                )
-                .padding(.horizontal)
+                    )
+                    .shadow(color: .white.opacity(0.8), radius: 15, x: -10, y: -10)
+                    .shadow(color: .black.opacity(0.1), radius: 15, x: 10, y: 10)
+                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
                 
-                Spacer(minLength: 40)
+                // Tips 圆圈
+                ForEach(Array(step.tips.enumerated()), id: \.element.id) { index, tip in
+                    let isCompleted = completedTips.contains(tip.id)
+                    
+                    TipCircle(
+                        tip: tip,
+                        isCompleted: isCompleted,
+                        size: circleSize(for: tip),
+                        onToggle: { completed in
+                            if completed {
+                                completedTips.insert(tip.id)
+                            } else {
+                                completedTips.remove(tip.id)
+                            }
+                        }
+                    )
+                    .position(tipPosition(in: geometry.size, for: index))
+                }
             }
         }
-        .onChange(of: showingIncompleteWarning) { newValue in
-            if newValue {
-                warningHaptic.notificationOccurred(.warning)
-            }
-        }
+        .ignoresSafeArea()
     }
 }
 
-struct TipRow: View {
+struct TipCircle: View {
     let tip: Tip
     let isCompleted: Bool
-    @Binding var showWarning: Bool
+    let size: CGFloat
     let onToggle: (Bool) -> Void
     
-    @State private var isShaking = false
+    private var backgroundColor: Color {
+        switch (tip.type, isCompleted) {
+        case (.todo, true):
+            return Color(hex: "B0DAFF")
+        case (.todo, false):
+            return Color(hex: "B9E9FC")
+        case (.warning, _):
+            return Color(hex: "FEFF86")
+        }
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Tip header with icon and text
-            HStack(alignment: .top, spacing: 12) {
-                if tip.type == .todo {
-                    Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(isCompleted ? .green : .gray)
-                        .onTapGesture {
-                            onToggle(!isCompleted)
+        Circle()
+            .fill(backgroundColor)
+            .frame(width: size, height: size)
+            .overlay(
+                VStack(spacing: 8) {
+                    if let images = tip.images {
+                        TabView {
+                            ForEach(images, id: \.imageName) { image in
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.red.opacity(0.1))
+                                    .overlay(
+                                        Image(systemName: "photo")
+                                            .foregroundColor(.red.opacity(0.3))
+                                    )
+                            }
                         }
-                } else {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
+                        .frame(height: size * 0.4)
+                        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                    }
+                    
+                    Text(tip.content)
+                        .font(.footnote)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 8)
                 }
-                
-                Text(tip.content)
-                    .font(.subheadline)
-                    .foregroundColor(tip.type == .todo && !isCompleted ? .primary : .secondary)
-                
-                Spacer()
-            }
-            
-            // Tip images in a grid
-            LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: 8),
-                GridItem(.flexible(), spacing: 8)
-            ], spacing: 8) {
-                ForEach(0..<2) { _ in
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.red.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.red.opacity(0.2), lineWidth: 1)
-                        )
-                        .aspectRatio(4/3, contentMode: .fit)
-                        .overlay(
-                            Image(systemName: "photo")
-                                .font(.system(size: 24))
-                                .foregroundColor(.red.opacity(0.3))
-                        )
+                .padding(16)
+            )
+            .shadow(color: .white.opacity(0.8), radius: 15, x: -10, y: -10)
+            .shadow(color: .black.opacity(0.1), radius: 15, x: 10, y: 10)
+            .onTapGesture {
+                if tip.type == .todo {
+                    onToggle(!isCompleted)
                 }
             }
-        }
-        .padding(.horizontal)
-        .modifier(ShakeEffect(shaking: isShaking))
-        .onChange(of: showWarning) { newValue in
-            if newValue && tip.type == .todo && !isCompleted {
-                withAnimation(.default.repeatCount(3)) {
-                    isShaking = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    isShaking = false
-                }
-            }
-        }
-    }
-}
-
-struct ShakeEffect: GeometryEffect {
-    var amount: CGFloat = 5
-    var shakesPerUnit = 3
-    var shaking: Bool
-    
-    var animatableData: CGFloat {
-        get { CGFloat(shaking ? 1 : 0) }
-        set { }
-    }
-    
-    func effectValue(size: CGSize) -> ProjectionTransform {
-        guard shaking else { return ProjectionTransform(.identity) }
-        let translation = amount * sin(animatableData * .pi * CGFloat(shakesPerUnit))
-        return ProjectionTransform(CGAffineTransform(translationX: translation, y: 0))
     }
 }

@@ -17,25 +17,41 @@ struct TutorialStepView: View {
     }
     
     var body: some View {
-        StepView(
-            step: step,
-            isLastStep: isLastStep,
-            onComplete: onComplete,
-            completedTips: $completedTips
-        )
-        .paperPlaneTransition(offset: dragOffset)
-        .gesture(
-            DragGesture()
-                .updating($isDragging) { _, state, _ in
-                    state = true
+        ZStack {
+            // 背景色
+            Color(hex: "DAF5FF")
+                .ignoresSafeArea()
+            
+            StepView(
+                step: step,
+                isLastStep: isLastStep,
+                onComplete: onComplete,
+                completedTips: $completedTips
+            )
+            .paperPlaneTransition(offset: dragOffset)
+            .gesture(
+                DragGesture()
+                    .updating($isDragging) { _, state, _ in
+                        state = true
+                    }
+                    .onChanged { value in
+                        handleDragChange(value)
+                    }
+                    .onEnded { value in
+                        handleDragEnd(value)
+                    }
+            )
+            
+            // 进度指示器
+            HStack(spacing: 8) {
+                ForEach(0..<FlightStep.steps.count, id: \.self) { index in
+                    Circle()
+                        .fill(index == currentStep ? Color(hex: "B0DAFF") : Color(hex: "B9E9FC"))
+                        .frame(width: 8, height: 8)
                 }
-                .onChanged { value in
-                    handleDragChange(value)
-                }
-                .onEnded { value in
-                    handleDragEnd(value)
-                }
-        )
+            }
+            .padding(.bottom, 16)
+        }
     }
     
     private func handleDragChange(_ value: DragGesture.Value) {
