@@ -5,19 +5,18 @@ struct StepView: View {
     let step: FlightStep
     let isLastStep: Bool
     let onComplete: () -> Void
-    @Binding var completedTips: Set<UUID>
     @Binding var isTransitioning: Bool
-    @Binding var transitionDirection: Int // -1: 向左, 1: 向右
+    @Binding var transitionDirection: Int
+    let dragProgress: CGFloat
     
     // 固定位置布局
     private func tipPosition(in size: CGSize, for index: Int) -> CGPoint {
         let centerX = size.width / 2
         let centerY = size.height / 2
-        let radius: CGFloat = min(size.width, size.height) * 0.42 // 增加半径，让tip更外围
+        let radius: CGFloat = min(size.width, size.height) * 0.42
         
-        // 根据步骤ID和tip索引确定固定角度，使用45度的偏移确保在四个角
-        let baseAngle = Double(step.id) * 12.0 // 每个步骤旋转12度
-        let angles: [Double] = [45, 135, 225, 315] // 四个角的基础角度
+        let baseAngle = Double(step.id) * 12.0
+        let angles: [Double] = [45, 135, 225, 315]
         let angle = angles[index] + baseAngle
         let radian = angle * .pi / 180.0
         
@@ -27,13 +26,23 @@ struct StepView: View {
         )
     }
     
-    // 固定大小
     private func circleSize(for tip: Tip) -> CGFloat {
         if tip.images != nil {
-            return tip.type == .todo ? 180 : 160 // 带图片的圆形更大
+            return 180
         } else {
-            return 120 // 不带图片的圆形较小
+            return 120
         }
+    }
+    
+    private func tipTransform(for index: Int, in geometry: GeometryProxy) -> (scale: CGFloat, opacity: CGFloat) {
+        let direction = dragProgress > 0 ? 1.0 : -1.0
+        let progress = abs(dragProgress)
+        
+        // 计算缩放和透明度
+        let scale = 1.0 - progress * 0.5
+        let opacity = 1.0 - progress
+        
+        return (scale: scale, opacity: opacity)
     }
     
     var body: some View {
@@ -45,26 +54,15 @@ struct StepView: View {
                 
                 // Tips 圆圈
                 ForEach(Array(step.tips.enumerated()), id: \.element.id) { index, tip in
-                    let isCompleted = completedTips.contains(tip.id)
+                    let transform = tipTransform(for: index, in: geometry)
                     
                     TipCircle(
                         tip: tip,
-                        isCompleted: isCompleted,
-                        size: circleSize(for: tip),
-                        onToggle: { completed in
-                            withAnimation(.spring()) {
-                                if completed {
-                                    completedTips.insert(tip.id)
-                                } else {
-                                    completedTips.remove(tip.id)
-                                }
-                            }
-                        }
+                        size: circleSize(for: tip)
                     )
                     .position(tipPosition(in: geometry.size, for: index))
-                    .scaleEffect(isTransitioning ? (transitionDirection > 0 ? 0 : 2) : 1)
-                    .opacity(isTransitioning ? 0 : 1)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.8), value: isTransitioning)
+                    .scaleEffect(transform.scale)
+                    .opacity(transform.opacity)
                 }
                 
                 // 主圆圈（标题和描述）
@@ -87,6 +85,8 @@ struct StepView: View {
                     .shadow(color: .white.opacity(0.8), radius: 15, x: -10, y: -10)
                     .shadow(color: .black.opacity(0.1), radius: 15, x: 10, y: 10)
                     .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                    .scaleEffect(1.0 - abs(dragProgress) * 0.2)
+                    .opacity(1.0 - abs(dragProgress) * 0.5)
             }
         }
         .ignoresSafeArea()
@@ -95,35 +95,20 @@ struct StepView: View {
 
 struct TipCircle: View {
     let tip: Tip
-    let isCompleted: Bool
     let size: CGFloat
-    let onToggle: (Bool) -> Void
     
     private var backgroundColor: Color {
-        switch (tip.type, isCompleted) {
-        case (.todo, true):
+        switch tip.type {
+        case .todo:
             return Color(hex: "B9E9FC")
-        case (.todo, false):
-            return .clear
-        case (.warning, _):
+        case .warning:
             return Color(hex: "FEFF86")
         }
-    }
-    
-    private var strokeColor: Color {
-        if tip.type == .todo && !isCompleted {
-            return Color(hex: "B9E9FC")
-        }
-        return .clear
     }
     
     var body: some View {
         Circle()
             .fill(backgroundColor)
-            .overlay(
-                Circle()
-                    .strokeBorder(strokeColor, lineWidth: 3)
-            )
             .frame(width: size, height: size)
             .overlay(
                 VStack(spacing: 8) {
@@ -151,10 +136,5 @@ struct TipCircle: View {
             )
             .shadow(color: .white.opacity(0.8), radius: 15, x: -10, y: -10)
             .shadow(color: .black.opacity(0.1), radius: 15, x: 10, y: 10)
-            .onTapGesture {
-                if tip.type == .todo {
-                    onToggle(!isCompleted)
-                }
-            }
     }
 }

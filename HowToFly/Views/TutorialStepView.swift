@@ -3,12 +3,11 @@ import Foundation
 
 struct TutorialStepView: View {
     let currentStep: Int
-    let hasUncompletedTodos: Bool
     let onStepChange: (Int) -> Void
     @State private var dragOffset: CGFloat = 0
     @State private var isTransitioning = false
     @State private var transitionDirection = 0
-    @State private var completedTips = Set<UUID>()
+    @State private var dragProgress: CGFloat = 0
     
     var body: some View {
         ZStack {
@@ -22,10 +21,11 @@ struct TutorialStepView: View {
                     step: FlightStep.steps[currentStep],
                     isLastStep: currentStep == FlightStep.steps.count - 1,
                     onComplete: { },
-                    completedTips: $completedTips,
                     isTransitioning: $isTransitioning,
-                    transitionDirection: $transitionDirection
+                    transitionDirection: $transitionDirection,
+                    dragProgress: dragProgress
                 )
+                .offset(x: dragOffset)
                 
                 Spacer()
                 
@@ -43,45 +43,59 @@ struct TutorialStepView: View {
         .gesture(
             DragGesture()
                 .onChanged { value in
-                    if !hasUncompletedTodos {
-                        dragOffset = value.translation.width
+                    let translation = value.translation.width
+                    dragOffset = translation
+                    
+                    // 计算拖动进度 (-1.0 到 1.0)
+                    dragProgress = translation / UIScreen.main.bounds.width
+                    
+                    // 限制拖动范围
+                    if (currentStep == 0 && dragProgress > 0) ||
+                        (currentStep == FlightStep.steps.count - 1 && dragProgress < 0) {
+                        dragOffset = translation * 0.2 // 增加阻尼效果
+                        dragProgress = dragProgress * 0.2
                     }
                 }
-                .onEnded(handleDragEnd)
+                .onEnded { value in
+                    let translation = value.translation.width
+                    let velocity = value.predictedEndTranslation.width
+                    let threshold: CGFloat = UIScreen.main.bounds.width * 0.3
+                    
+                    // 判断是否需要切换页面
+                    var shouldChangePage = false
+                    if abs(translation) > threshold || abs(velocity) > 800 {
+                        if (translation > 0 && currentStep > 0) ||
+                            (translation < 0 && currentStep < FlightStep.steps.count - 1) {
+                            shouldChangePage = true
+                        }
+                    }
+                    
+                    if shouldChangePage {
+                        // 切换页面
+                        let newStep = translation > 0 ? currentStep - 1 : currentStep + 1
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            dragOffset = translation > 0 ? UIScreen.main.bounds.width : -UIScreen.main.bounds.width
+                            dragProgress = translation > 0 ? 1.0 : -1.0
+                        }
+                        
+                        // 延迟切换以等待动画完成
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            onStepChange(newStep)
+                            
+                            // 重置位置
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                dragOffset = 0
+                                dragProgress = 0
+                            }
+                        }
+                    } else {
+                        // 回到原位
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            dragOffset = 0
+                            dragProgress = 0
+                        }
+                    }
+                }
         )
-        .onChange(of: currentStep) { newStep in
-            // 重置完成状态
-            completedTips.removeAll()
-        }
-    }
-    
-    private func handleDragEnd(_ value: DragGesture.Value) {
-        if !hasUncompletedTodos {
-            let threshold: CGFloat = 50
-            if abs(value.translation.width) > threshold {
-                isTransitioning = true
-                if value.translation.width > 0 && currentStep > 0 {
-                    transitionDirection = -1
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        onStepChange(currentStep - 1)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            isTransitioning = false
-                        }
-                    }
-                } else if value.translation.width < 0 && currentStep < FlightStep.steps.count - 1 {
-                    transitionDirection = 1
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        onStepChange(currentStep + 1)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            isTransitioning = false
-                        }
-                    }
-                }
-            }
-        }
-        
-        withAnimation(.spring()) {
-            dragOffset = 0
-        }
     }
 }
