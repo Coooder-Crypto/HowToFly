@@ -3,6 +3,8 @@ import Foundation
 import CoreGraphics
 
 struct StepView: View {
+    @Environment(\.colorScheme) var colorScheme
+    
     let step: FlightStep
     let isLastStep: Bool
     let onComplete: () -> Void
@@ -10,6 +12,16 @@ struct StepView: View {
     @Binding var transitionDirection: Int
     let dragProgress: CGFloat
     @State private var showingCompletion = false
+    
+    // 动态背景颜色
+    var backgroundColor: Color {
+        colorScheme == .dark ? Color(hex: "1E1E1E") : Color(hex: "DAF5FF")
+    }
+    
+    // 主圆圈颜色
+    var circleColor: Color {
+        colorScheme == .dark ? Color(hex: "2E2E2E") : Color(hex: "B0DAFF")
+    }
     
     // 固定位置布局
     private func tipPosition(in size: CGSize, for index: Int) -> CGPoint {
@@ -42,7 +54,7 @@ struct StepView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                Color(hex: "DAF5FF")
+                backgroundColor
                     .ignoresSafeArea()
                 
                 // Tips 圆圈
@@ -60,23 +72,35 @@ struct StepView: View {
                 
                 // 主圆圈（标题和描述）
                 Circle()
-                    .fill(Color(hex: "B0DAFF"))
+                    .fill(circleColor)
                     .frame(width: 220, height: 220)
                     .overlay(
                         VStack(spacing: 12) {
                             Text(step.title)
                                 .font(.title2)
                                 .fontWeight(.bold)
+                                .foregroundColor(Color(.label)) // 动态文本颜色
                                 .multilineTextAlignment(.center)
                             
                             Text(step.description)
                                 .font(.subheadline)
+                                .foregroundColor(Color(.secondaryLabel)) // 动态副文本颜色
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 20)
                         }
                     )
-                    .shadow(color: .white.opacity(0.8), radius: 15, x: -10, y: -10)
-                    .shadow(color: .black.opacity(0.1), radius: 15, x: 10, y: 10)
+                    .shadow(
+                        color: colorScheme == .dark ? Color.black.opacity(0.5) : Color.white.opacity(0.8),
+                        radius: 15,
+                        x: -10,
+                        y: -10
+                    )
+                    .shadow(
+                        color: colorScheme == .dark ? Color.black.opacity(0.3) : Color.black.opacity(0.1),
+                        radius: 15,
+                        x: 10,
+                        y: 10
+                    )
                     .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
                     .scaleEffect(1.0 - abs(dragProgress) * 0.2)
                     .opacity(1.0 - abs(dragProgress) * 0.5)
@@ -113,15 +137,17 @@ struct StepView: View {
 }
 
 struct TipCircle: View {
+    @Environment(\.colorScheme) var colorScheme
+    
     let tip: Tip
     let size: CGFloat
     
     private var backgroundColor: Color {
         switch tip.type {
         case .todo:
-            return Color(hex: "B9E9FC")
+            return colorScheme == .dark ? Color(hex: "1C1C1C") : Color(hex: "B9E9FC")
         case .warning:
-            return Color(hex: "FEFF86")
+            return colorScheme == .dark ? Color(hex: "5E5E5E") : Color(hex: "FEFF86")
         }
     }
     
@@ -133,17 +159,29 @@ struct TipCircle: View {
                 VStack(spacing: 8) {
                     Image(systemName: tip.icon)
                         .font(.system(size: 24))
-                        .foregroundColor(tip.type == .warning ? .orange : .blue)
+                        .foregroundColor(
+                            tip.type == .warning ? (colorScheme == .dark ? .yellow : .orange) : (colorScheme == .dark ? .blue : .blue)
+                        ) // 动态图标颜色
                     
                     Text(tip.content)
                         .font(.footnote)
+                        .foregroundColor(Color(.label)) // 动态文本颜色
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 8)
                 }
                 .padding(16)
             )
-            .shadow(color: .white.opacity(0.8), radius: 15, x: -10, y: -10)
-            .shadow(color: .black.opacity(0.1), radius: 15, x: 10, y: 10)
+            .shadow(
+                color: colorScheme == .dark ? Color.black.opacity(0.5) : Color.white.opacity(0.8),
+                radius: 15,
+                x: -10,
+                y: -10
+            )
+            .shadow(
+                color: colorScheme == .dark ? Color.black.opacity(0.3) : Color.black.opacity(0.1),
+                radius: 15,
+                x: 10,
+                y: 10
+            )
     }
 }
-
