@@ -9,12 +9,13 @@ struct StepView: View {
     @Binding var isTransitioning: Bool
     @Binding var transitionDirection: Int
     let dragProgress: CGFloat
+    @State private var showingCompletion = false
     
     // 固定位置布局
     private func tipPosition(in size: CGSize, for index: Int) -> CGPoint {
         let centerX = size.width / 2
         let centerY = size.height / 2
-        let radius: CGFloat = min(size.width, size.height) * 0.42
+        let radius: CGFloat = min(size.width, size.height) * 0.43
         
         let baseAngle = Double(step.id) * 12.0
         let angles: [Double] = [45, 135, 225, 315]
@@ -25,10 +26,6 @@ struct StepView: View {
             x: centerX + CGFloat(Darwin.cos(radian)) * radius,
             y: centerY + CGFloat(Darwin.sin(radian)) * radius
         )
-    }
-    
-    private func circleSize(for tip: Tip) -> CGFloat {
-        return CGFloat.random(in: 120...180)
     }
     
     private func tipTransform(for index: Int, in geometry: GeometryProxy) -> (scale: CGFloat, opacity: CGFloat) {
@@ -45,7 +42,6 @@ struct StepView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // 背景色
                 Color(hex: "DAF5FF")
                     .ignoresSafeArea()
                 
@@ -84,9 +80,35 @@ struct StepView: View {
                     .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
                     .scaleEffect(1.0 - abs(dragProgress) * 0.2)
                     .opacity(1.0 - abs(dragProgress) * 0.5)
+                
+                // Finish Button
+                if isLastStep {
+                    VStack {
+                        Spacer()
+                        Button(action: {
+                            showingCompletion = true
+                        }) {
+                            HStack {
+                                Text("FINISH")
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                Image(systemName: "checkmark.circle.fill")
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .background(Color.accentColor)
+                            .cornerRadius(12)
+                            .shadow(color: .accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
+                        }
+                        .padding(.bottom, 40)
+                    }
+                }
             }
         }
         .ignoresSafeArea()
+        .fullScreenCover(isPresented: $showingCompletion) {
+            CompletionView()
+        }
     }
 }
 
@@ -109,6 +131,10 @@ struct TipCircle: View {
             .frame(width: size, height: size)
             .overlay(
                 VStack(spacing: 8) {
+                    Image(systemName: tip.icon)
+                        .font(.system(size: 24))
+                        .foregroundColor(tip.type == .warning ? .orange : .blue)
+                    
                     Text(tip.content)
                         .font(.footnote)
                         .multilineTextAlignment(.center)
@@ -120,3 +146,4 @@ struct TipCircle: View {
             .shadow(color: .black.opacity(0.1), radius: 15, x: 10, y: 10)
     }
 }
+

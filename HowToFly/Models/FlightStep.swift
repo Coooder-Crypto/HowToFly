@@ -80,9 +80,7 @@ struct FlightStep: Identifiable {
     ]
     
     private static func createTip(step: String, type: TipType, icon: String) -> Tip {
-
         let size = CGFloat.random(in: 120...180)
-
         return Tip(content: step, type: type, icon: icon, size: size)
     }
 }

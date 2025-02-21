@@ -13,31 +13,34 @@ struct WelcomeView: View {
                 .symbolRenderingMode(.hierarchical)
             
             VStack(spacing: 16) {
-                Text("给第一次坐飞机的朋友")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                Text("First-Time Flyer's Guide")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
                     .multilineTextAlignment(.center)
                 
-                Text("欢迎使用飞行指南！\n我们将为您提供详细的乘机流程指导")
-                    .font(.title3)
+                Text("Welcome to the Flight Guide!\nWe'll walk you through the step-by-step process of flying.")
+                    .font(.system(size: 18, weight: .medium, design: .rounded))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.secondary)
+                    .lineSpacing(6)
             }
+            .padding(.horizontal, 24)
             
             Spacer()
             
             Button(action: onStart) {
-                Text("开始")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.accentColor)
-                    .foregroundColor(.white)
-                    .cornerRadius(15)
+                HStack {
+                    Text("Get Started")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    Image(systemName: "arrow.right.circle.fill")
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.accentColor)
+                .cornerRadius(12)
+                .shadow(color: .accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
             }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
         }
+        .background(Color(.systemBackground).ignoresSafeArea())
     }
 }

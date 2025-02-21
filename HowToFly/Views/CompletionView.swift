@@ -11,18 +11,21 @@ struct CompletionView: View {
                 .symbolRenderingMode(.hierarchical)
             
             VStack(spacing: 16) {
-                Text("祝您旅途愉快")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                Text("Have a Great Journey!")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .multilineTextAlignment(.center)
                 
-                Text("您已完成所有乘机准备步骤\n祝您有一个愉快的航程！")
-                    .font(.title3)
+                Text("You've completed all the pre-flight steps.\nWishing you a pleasant flight!")
+                    .font(.system(size: 18, weight: .medium, design: .rounded))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.secondary)
+                    .lineSpacing(6)
             }
+            .padding(.horizontal, 24)
             
             Spacer()
         }
         .padding()
+        .background(Color(.systemBackground).ignoresSafeArea()) 
     }
 }
