@@ -5,11 +5,6 @@ enum TipType {
     case warning
 }
 
-struct TipImage: Equatable {
-    let imageName: String
-    let description: String
-}
-
 struct Tip: Identifiable, Hashable, Equatable {
     static func == (lhs: Tip, rhs: Tip) -> Bool {
         lhs.id == rhs.id
@@ -18,23 +13,11 @@ struct Tip: Identifiable, Hashable, Equatable {
     let id = UUID()
     let content: String
     let type: TipType
-    let images: [TipImage]?  // nil 表示没有图片
+    let icon: String  // System icon name for the tip
+    let size: CGFloat
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
-    }
-    
-    static func createTip(content: String, type: TipType, withImages: Bool) -> Tip {
-        if withImages {
-            // Mock images
-            let images = [
-                TipImage(imageName: "mock_image_1", description: "示例图片1"),
-                TipImage(imageName: "mock_image_2", description: "示例图片2")
-            ]
-            return Tip(content: content, type: type, images: images)
-        } else {
-            return Tip(content: content, type: type, images: nil)
-        }
     }
 }
 
@@ -48,55 +31,58 @@ struct FlightStep: Identifiable {
     static let steps: [FlightStep] = [
         FlightStep(
             id: 0,
-            title: "找到正确航站楼",
-            description: "根据您的机票信息确认正确的航站楼和楼层，请注意观察机场指示牌",
+            title: "Find the Right Terminal",
+            description: "Check your ticket for the correct terminal and floor. Follow airport signs.",
             icon: "building.2",
             tips: [
-                createTip(step: "找到航站楼", type: .todo, hasImages: true),
-                createTip(step: "确认登机口", type: .todo, hasImages: false),
-                createTip(step: "注意航班时间", type: .warning, hasImages: true),
-                createTip(step: "关注天气情况", type: .warning, hasImages: false)
+                createTip(step: "Locate Terminal", type: .todo, icon: "map"),
+                createTip(step: "Check Gate Info", type: .todo, icon: "signpost.right"),
+                createTip(step: "Watch Flight Time", type: .warning, icon: "clock"),
+                createTip(step: "Confirm Airline", type: .warning, icon: "airplane.circle")
             ]
         ),
         FlightStep(
             id: 1,
-            title: "办理值机手续",
-            description: "在值机柜台或自助值机机器办理登机手续，准备好您的证件",
+            title: "Check-In",
+            description: "Proceed to the check-in counter or self-service kiosk with your ID.",
             icon: "ticket",
             tips: [
-                createTip(step: "准备证件", type: .todo, hasImages: true),
-                createTip(step: "选择座位", type: .todo, hasImages: false),
-                createTip(step: "行李重量", type: .warning, hasImages: true),
-                createTip(step: "物品限制", type: .warning, hasImages: false)
+                createTip(step: "Check Bags", type: .todo, icon: "bag"),
+                createTip(step: "Select Seat", type: .todo, icon: "chair"),
+                createTip(step: "Baggage Rules", type: .warning, icon: "scalemass"),
+                createTip(step: "Item Restrictions", type: .warning, icon: "exclamationmark.triangle")
             ]
         ),
         FlightStep(
             id: 2,
-            title: "通过安检",
-            description: "请按照安检要求准备好随身物品，配合安检人员工作",
+            title: "Security Check",
+            description: "Prepare your belongings and follow security instructions.",
             icon: "shield.checkerboard",
             tips: [
-                createTip(step: "取出电子设备", type: .todo, hasImages: true),
-                createTip(step: "脱掉外套", type: .todo, hasImages: false),
-                createTip(step: "液体限制", type: .warning, hasImages: true),
-                createTip(step: "违禁品", type: .warning, hasImages: false)
+                createTip(step: "Remove Electronics", type: .todo, icon: "laptopcomputer"),
+                createTip(step: "Take Off Jacket", type: .todo, icon: "tshirt"),
+                createTip(step: "Liquid Rules", type: .warning, icon: "drop"),
+                createTip(step: "Prohibited Items", type: .warning, icon: "xmark.shield")
             ]
         ),
         FlightStep(
             id: 3,
-            title: "找到登机口",
-            description: "根据登机牌上的信息找到正确的登机口，注意登机时间",
+            title: "Board the Plane",
+            description: "Find your gate using your boarding pass. Be ready for boarding.",
             icon: "airplane",
             tips: [
-                createTip(step: "确认登机口", type: .todo, hasImages: true),
-                createTip(step: "准备登机牌", type: .todo, hasImages: false),
-                createTip(step: "登机顺序", type: .warning, hasImages: true),
-                createTip(step: "行李尺寸", type: .warning, hasImages: false)
+                createTip(step: "Confirm Gate", type: .todo, icon: "arrow.right.circle"),
+                createTip(step: "Prepare Boarding Pass", type: .todo, icon: "ticket.fill"),
+                createTip(step: "Boarding Order", type: .warning, icon: "list.number"),
+                createTip(step: "Bag Size Limits", type: .warning, icon: "ruler")
             ]
         )
     ]
     
-    private static func createTip(step: String, type: TipType, hasImages: Bool) -> Tip {
-        Tip.createTip(content: step, type: type, withImages: hasImages)
+    private static func createTip(step: String, type: TipType, icon: String) -> Tip {
+
+        let size = CGFloat.random(in: 120...180)
+
+        return Tip(content: step, type: type, icon: icon, size: size)
     }
 }

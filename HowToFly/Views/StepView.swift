@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import CoreGraphics
 
 struct StepView: View {
     let step: FlightStep
@@ -27,11 +28,7 @@ struct StepView: View {
     }
     
     private func circleSize(for tip: Tip) -> CGFloat {
-        if tip.images != nil {
-            return 180
-        } else {
-            return 120
-        }
+        return CGFloat.random(in: 120...180)
     }
     
     private func tipTransform(for index: Int, in geometry: GeometryProxy) -> (scale: CGFloat, opacity: CGFloat) {
@@ -58,7 +55,7 @@ struct StepView: View {
                     
                     TipCircle(
                         tip: tip,
-                        size: circleSize(for: tip)
+                        size: tip.size
                     )
                     .position(tipPosition(in: geometry.size, for: index))
                     .scaleEffect(transform.scale)
@@ -112,21 +109,6 @@ struct TipCircle: View {
             .frame(width: size, height: size)
             .overlay(
                 VStack(spacing: 8) {
-                    if let images = tip.images {
-                        TabView {
-                            ForEach(images, id: \.imageName) { image in
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.red.opacity(0.1))
-                                    .overlay(
-                                        Image(systemName: "photo")
-                                            .foregroundColor(.red.opacity(0.3))
-                                    )
-                            }
-                        }
-                        .frame(height: size * 0.4)
-                        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                    }
-                    
                     Text(tip.content)
                         .font(.footnote)
                         .multilineTextAlignment(.center)
