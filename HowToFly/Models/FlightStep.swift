@@ -31,7 +31,7 @@ struct FlightStep: Identifiable {
     static let steps: [FlightStep] = [
         FlightStep(
             id: 0,
-            title: "Find the Right Terminal",
+            title: "Find the Terminal",
             description: "Check your ticket for the correct terminal and floor. Follow airport signs.",
             icon: "building.2",
             tips: [

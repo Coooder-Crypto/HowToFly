@@ -4,6 +4,8 @@ struct TutorialStepView: View {
     let currentStep: Int
     let onStepChange: (Int) -> Void
     @State private var offset: CGFloat = 0
+    @State private var dragDirection: Int = 0 // -1: 向左拖动, 1: 向右拖动
+    @State private var isTransitioning = false
     
     private var screenWidth: CGFloat {
         UIScreen.main.bounds.width
@@ -23,9 +25,9 @@ struct TutorialStepView: View {
                                 step: FlightStep.steps[index],
                                 isLastStep: index == FlightStep.steps.count - 1,
                                 onComplete: {},
-                                isTransitioning: .constant(false),
-                                transitionDirection: .constant(0),
-                                dragProgress: 0
+                                isTransitioning: .constant(isTransitioning),
+                                transitionDirection: .constant(dragDirection),
+                                dragProgress: offset / geometry.size.width
                             )
                             .frame(width: geometry.size.width)
                         }
@@ -51,6 +53,10 @@ struct TutorialStepView: View {
                 .onChanged { value in
                     let translation = value.translation.width
                     
+                    // 更新拖动方向
+                    dragDirection = translation > 0 ? 1 : -1
+                    isTransitioning = true
+                    
                     // 边缘阻尼效果
                     if (currentStep == 0 && translation > 0) ||
                         (currentStep == FlightStep.steps.count - 1 && translation < 0) {
@@ -63,13 +69,14 @@ struct TutorialStepView: View {
                     let translation = value.translation.width
                     let threshold = screenWidth * 0.3
                     
-                    withAnimation(.easeOut(duration: 0.2)) {
+                    withAnimation(.easeInOut(duration: 0.3)) {
                         if translation > threshold && currentStep > 0 {
                             onStepChange(currentStep - 1)
                         } else if translation < -threshold && currentStep < FlightStep.steps.count - 1 {
                             onStepChange(currentStep + 1)
                         }
                         offset = 0
+                        isTransitioning = false
                     }
                 }
         )
