@@ -154,7 +154,7 @@ struct StepView: View {
             }
             .ignoresSafeArea()
             .fullScreenCover(isPresented: $showingCompletion) {
-                CompletionView()
+                CompletionView(onBackToHome: onComplete)
             }
         }
     }

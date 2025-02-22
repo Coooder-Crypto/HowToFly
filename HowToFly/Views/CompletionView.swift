@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct CompletionView: View {
+    @Environment(\.dismiss) private var dismiss
+    var onBackToHome: () -> Void = {}
+    
     var body: some View {
         VStack(spacing: 40) {
             Spacer()
@@ -23,9 +26,26 @@ struct CompletionView: View {
             }
             .padding(.horizontal, 24)
             
+            Button(action: {
+                dismiss()
+                onBackToHome()
+            }) {
+                HStack {
+                    Image(systemName: "house.circle.fill")
+                    Text("Back to Home")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.accentColor)
+                .cornerRadius(12)
+                .shadow(color: .accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
+            }
+            
             Spacer()
         }
         .padding()
-        .background(Color(.systemBackground).ignoresSafeArea()) 
+        .background(Color(.systemBackground).ignoresSafeArea())
     }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 struct TutorialStepView: View {
     let currentStep: Int
     let onStepChange: (Int) -> Void
+    let onBackToHome: () -> Void
     @State private var offset: CGFloat = 0
     @State private var dragDirection: Int = 0 // -1: 向左拖动, 1: 向右拖动
     @State private var isTransitioning = false
@@ -24,7 +25,7 @@ struct TutorialStepView: View {
                             StepView(
                                 step: FlightStep.steps[index],
                                 isLastStep: index == FlightStep.steps.count - 1,
-                                onComplete: {},
+                                onComplete: onBackToHome,
                                 isTransitioning: .constant(isTransitioning),
                                 transitionDirection: .constant(dragDirection),
                                 dragProgress: offset / geometry.size.width
@@ -67,12 +68,16 @@ struct TutorialStepView: View {
                 }
                 .onEnded { value in
                     let translation = value.translation.width
-                    let threshold = screenWidth * 0.3
+                    let velocity = value.predictedEndTranslation.width / screenWidth
+                    let threshold = screenWidth * 0.25 // 降低滑动距离阈值
+                    
+                    // 如果滑动速度很快，降低阈值
+                    let adjustedThreshold = abs(velocity) > 1.0 ? threshold * 0.6 : threshold
                     
                     withAnimation(.easeInOut(duration: 0.3)) {
-                        if translation > threshold && currentStep > 0 {
+                        if (translation > adjustedThreshold || velocity > 1.0) && currentStep > 0 {
                             onStepChange(currentStep - 1)
-                        } else if translation < -threshold && currentStep < FlightStep.steps.count - 1 {
+                        } else if (translation < -adjustedThreshold || velocity < -1.0) && currentStep < FlightStep.steps.count - 1 {
                             onStepChange(currentStep + 1)
                         }
                         offset = 0

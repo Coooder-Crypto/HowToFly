@@ -26,6 +26,12 @@ struct ContentView: View {
                         withAnimation {
                             currentStep = newStep
                         }
+                    },
+                    onBackToHome: {
+                        withAnimation {
+                            showWelcome = true
+                            currentStep = 0
+                        }
                     }
                 )
             }
