@@ -41,7 +41,6 @@ struct StepView: View {
     }
     
     private func tipTransform(for index: Int, in geometry: GeometryProxy) -> (scale: CGFloat, opacity: CGFloat) {
-        let direction = dragProgress > 0 ? 1.0 : -1.0
         let progress = abs(dragProgress)
         
         // 计算缩放和透明度
