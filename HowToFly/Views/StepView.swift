@@ -13,6 +13,22 @@ struct StepView: View {
     let dragProgress: CGFloat
     @State private var showingCompletion = false
     
+    private func tipIndicator(icon: String, title: String, color: Color, textColor: Color) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundColor(textColor)
+            
+            Text(title)
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundColor(Color(.label))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(color)
+        .cornerRadius(12)
+    }
+    
     // 动态背景颜色
     var backgroundColor: Color {
         colorScheme == .dark ? Color(hex: "1E1E1E") : Color(hex: "DAF5FF")
@@ -128,10 +144,31 @@ struct StepView: View {
                 .scaleEffect(1.0 - abs(dragProgress) * 0.2)
                 .opacity(1.0 - abs(dragProgress) * 0.5)
                     
-                    // Finish Button
-                    if isLastStep {
-                        VStack {
-                            Spacer()
+                    VStack {
+                        Spacer()
+                        
+                        // 提示标识
+                        HStack(spacing: 20) {
+                            tipIndicator(
+                                icon: "checkmark.circle.fill",
+                                title: "To-Do Steps",
+                                color: colorScheme == .dark ? .blue : Color(hex: "B9E9FC"),
+                                textColor: .blue
+                            )
+                            
+                            if step.tips.contains(where: { $0.type == .warning }) {
+                                tipIndicator(
+                                    icon: "exclamationmark.triangle.fill",
+                                    title: "Important Notes",
+                                    color: colorScheme == .dark ? .yellow : Color(hex: "FEFF86"),
+                                    textColor: .orange
+                                )
+                            }
+                        }
+                        .padding(.horizontal, 36)
+                        
+                        // Finish Button
+                        if isLastStep {
                             Button(action: {
                                 showingCompletion = true
                             }) {
@@ -147,8 +184,11 @@ struct StepView: View {
                                 .cornerRadius(12)
                                 .shadow(color: .accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
                             }
-                            .padding(.bottom, 40)
+                            .padding(.top, 24)
                         }
+                        
+                        Spacer()
+                            .frame(height: 40)
                     }
                 }
             }

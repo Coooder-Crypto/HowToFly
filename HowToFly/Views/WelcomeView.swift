@@ -41,6 +41,7 @@ struct WelcomeView: View {
                 .shadow(color: .accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
             }
         }
+        .padding(.bottom, 70)
         .background(Color(.systemBackground).ignoresSafeArea())
     }
 }
