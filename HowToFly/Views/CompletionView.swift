@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CompletionView: View {
+    @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) private var dismiss
     var onBackToHome: () -> Void = {}
     
@@ -35,12 +36,12 @@ struct CompletionView: View {
                     Text("Back to Home")
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                 }
-                .foregroundColor(.white)
+                .foregroundColor(colorScheme == .dark ? .black : .white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .background(Color.accentColor)
+                .background(colorScheme == .dark ? .white : Color.accentColor)
                 .cornerRadius(12)
-                .shadow(color: .accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
+                .shadow(color: (colorScheme == .dark ? Color.white : Color.accentColor).opacity(0.3), radius: 10, x: 0, y: 5)
             }
             
             Spacer()

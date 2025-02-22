@@ -25,8 +25,12 @@ struct StepView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(color)
+        .background(color.opacity(colorScheme == .dark ? 0.2 : 1))
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(color.opacity(colorScheme == .dark ? 0.5 : 0), lineWidth: 1)
+        )
     }
     
     // 动态背景颜色
@@ -177,12 +181,12 @@ struct StepView: View {
                                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                                     Image(systemName: "checkmark.circle.fill")
                                 }
-                                .foregroundColor(.white)
+                                .foregroundColor(colorScheme == .dark ? .black : .white)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
-                                .background(Color.accentColor)
+                                .background(colorScheme == .dark ? Color.white : Color.accentColor)
                                 .cornerRadius(12)
-                                .shadow(color: .accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
+                                .shadow(color: (colorScheme == .dark ? Color.white : Color.accentColor).opacity(0.3), radius: 10, x: 0, y: 5)
                             }
                             .padding(.top, 24)
                         }

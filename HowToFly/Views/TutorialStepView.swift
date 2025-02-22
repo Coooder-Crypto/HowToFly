@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct TutorialStepView: View {
+    @Environment(\.colorScheme) var colorScheme
     let currentStep: Int
     let onStepChange: (Int) -> Void
     let onBackToHome: () -> Void
@@ -14,7 +15,7 @@ struct TutorialStepView: View {
     
     var body: some View {
         ZStack {
-            Color(hex: "DAF5FF")
+            Color(colorScheme == .dark ? Color(hex: "1E1E1E") : Color(hex: "DAF5FF"))
                 .ignoresSafeArea()
             
             VStack {
@@ -42,7 +43,9 @@ struct TutorialStepView: View {
                 HStack(spacing: 8) {
                     ForEach(0..<FlightStep.steps.count, id: \.self) { index in
                         Circle()
-                            .fill(index == currentStep ? Color(hex: "B0DAFF") : Color(hex: "B9E9FC"))
+                            .fill(index == currentStep 
+                                  ? (colorScheme == .dark ? Color.white : Color(hex: "B0DAFF")) 
+                                  : (colorScheme == .dark ? Color.gray.opacity(0.3) : Color(hex: "B9E9FC")))
                             .frame(width: 8, height: 8)
                     }
                 }

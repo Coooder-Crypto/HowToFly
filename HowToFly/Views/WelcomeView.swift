@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct WelcomeView: View {
+    @Environment(\.colorScheme) var colorScheme
     let onStart: () -> Void
     
     var body: some View {
@@ -33,12 +34,12 @@ struct WelcomeView: View {
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                     Image(systemName: "arrow.right.circle.fill")
                 }
-                .foregroundColor(.white)
+                .foregroundColor(colorScheme == .dark ? .black : .white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .background(Color.accentColor)
+                .background(colorScheme == .dark ? .white : Color.accentColor)
                 .cornerRadius(12)
-                .shadow(color: .accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
+                .shadow(color: (colorScheme == .dark ? Color.white : Color.accentColor).opacity(0.3), radius: 10, x: 0, y: 5)
             }
         }
         .padding(.bottom, 70)
