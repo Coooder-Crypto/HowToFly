@@ -1,40 +1,40 @@
 import SwiftUI
 
-struct WelcomeView: View {
+struct CompletionView: View {
     @Environment(\.colorScheme) var colorScheme
-    let onStart: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    var onBackToHome: () -> Void = {}
     
     var body: some View {
         VStack(spacing: 40) {
             Spacer()
             
-            Image(systemName: "airplane.circle.fill")
+            Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 100))
-                .foregroundColor(.accentColor)
+                .foregroundColor(.green)
                 .symbolRenderingMode(.hierarchical)
             
             VStack(spacing: 16) {
-                Text("Welcome to HowToFly")
+                Text("Have a Great Journey!")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .multilineTextAlignment(.center)
                 
-                Text("First time flying? Don’t worry, I’ve got you!\n\nFollow step-by-step guidance for a smooth and stress-free journey.")
+                Text("You've completed all the pre-flight steps.\nWishing you a pleasant flight!")
                     .font(.system(size: 18, weight: .medium, design: .rounded))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.secondary)
                     .lineSpacing(6)
-                    .padding(.horizontal, 24)
             }
-
             .padding(.horizontal, 24)
             
-            Spacer()
-            
-            Button(action: onStart) {
+            Button(action: {
+                dismiss()
+                onBackToHome()
+            }) {
                 HStack {
-                    Text("Get Started")
+                    Image(systemName: "house.circle.fill")
+                    Text("Back to Home")
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    Image(systemName: "arrow.right.circle.fill")
                 }
                 .foregroundColor(colorScheme == .dark ? .black : .white)
                 .padding(.horizontal, 16)
@@ -43,8 +43,10 @@ struct WelcomeView: View {
                 .cornerRadius(12)
                 .shadow(color: (colorScheme == .dark ? Color.white : Color.accentColor).opacity(0.3), radius: 10, x: 0, y: 5)
             }
+            
+            Spacer()
         }
-        .padding(.bottom, 70)
+        .padding()
         .background(Color(.systemBackground).ignoresSafeArea())
     }
 }
